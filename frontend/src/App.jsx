@@ -9,7 +9,7 @@ import ActivityTracker from './pages/ActivityTracker';
 
 function Layout({ children }) {
   return (
-    <div className="flex h-screen bg-cream">
+    <div className="flex h-screen bg-[#f8f7eb]">
       <Sidebar />
       <main className="flex-1 overflow-auto p-8">
         {children}

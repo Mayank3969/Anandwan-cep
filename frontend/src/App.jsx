@@ -1,29 +1,39 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import Home from './pages/Home';
-import CostingPage from './pages/CostingPage';
-import InventoryPage from './pages/InventoryPage';
-import DashboardPage from './pages/DashboardPage';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import PriceCalculator from './pages/PriceCalculator';
+import Inventory from './pages/Inventory';
+import ActivityTracker from './pages/ActivityTracker';
+
+function Layout({ children }) {
+  return (
+    <div className="flex h-screen bg-cream">
+      <Sidebar />
+      <main className="flex-1 overflow-auto p-8">
+        {children}
+      </main>
+    </div>
+  );
+}
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <div className="min-h-screen flex bg-gray-50 overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto w-full">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/costing" element={<CostingPage />} />
-              <Route path="/inventory" element={<InventoryPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
-    </AppProvider>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        
+        {/* Protected Routes (assumed functional for mock purposes) */}
+        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+        <Route path="/calculator" element={<Layout><PriceCalculator /></Layout>} />
+        <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
+        <Route path="/activity" element={<Layout><ActivityTracker /></Layout>} />
+        
+        {/* Default redirect to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

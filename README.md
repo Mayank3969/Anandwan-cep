@@ -30,10 +30,85 @@ By removing the complexity of manual bookkeeping and price estimation, this engi
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend Framework** | Vite + Vanilla JS (Scalable for React) |
-| **Styling** | Tailwind CSS (Utility-first Accessibility) |
+| **Backend Framework** | Python 3.10+, FastAPI |
+| **ORM / Migrations** | SQLAlchemy + Alembic |
+| **Database** | SQLite (dev) / PostgreSQL (prod) |
+| **Frontend Framework** | React.js + Vite |
+| **Styling** | Tailwind CSS + Lucide React |
+| **HTTP Client** | Axios |
 | **Design System** | Custom "Stitch" Accessible UI |
-| **Icons** | Lucide / Heroicons (High-stroke weight for visibility) |
+
+---
+
+## 📂 Project Structure
+
+```
+Anandwan-cep/
+├── backend/
+│   ├── anandwan.db               # SQLite development database
+│   └── app/
+│       ├── main.py               # Application entry point & CORS config
+│       ├── database.py           # DB session setup
+│       ├── security.py           # Auth & JWT utilities
+│       ├── models/
+│       │   ├── __init__.py
+│       │   ├── product.py        # Product table definition
+│       │   ├── costing.py        # CostEntry table definition
+│       │   ├── sale.py           # Sales table definition
+│       │   └── batch.py          # Batch table definition
+│       ├── routes/
+│       │   ├── auth.py           # Login / token endpoints
+│       │   ├── products.py       # GET /products, POST /products
+│       │   ├── sales.py          # GET /sales, POST /sales
+│       │   ├── costing.py        # POST /costing/calculate, /costing/save
+│       │   ├── batches.py        # Batch management endpoints
+│       │   └── dashboard.py      # GET /dashboard/summary, /dashboard/impact
+│       └── services/
+│           ├── msp_engine.py     # Core MSP calculation formula
+│           └── metrics.py        # Analytics & sustainability aggregations
+│
+├── frontend/
+│   ├── index.html
+│   ├── .env.local                # Backend API base URL
+│   ├── vite.config.js
+│   ├── tailwind.config.js        # Stitch design tokens & Anandwan palette
+│   ├── postcss.config.js
+│   ├── package.json
+│   └── src/
+│       ├── main.jsx              # React entry point
+│       ├── App.jsx               # Routing & layout
+│       ├── index.css             # Global styles
+│       ├── assets/
+│       │   └── bg_textile.png    # Background texture
+│       ├── components/
+│       │   └── Sidebar.jsx       # Navigation sidebar
+│       ├── pages/
+│       │   ├── Login.jsx         # MSS-branded entry point
+│       │   ├── Dashboard.jsx     # Summary cards & monthly trends
+│       │   ├── PriceCalculator.jsx  # MSP engine UI (Cost Architect)
+│       │   ├── Inventory.jsx     # Searchable product catalog
+│       │   └── ActivityTracker.jsx  # Historical calculation tracker
+│       └── services/
+│           └── api.js            # Axios client & API wrappers
+│
+└── README.md
+```
+
+---
+
+## ⚙️ The MSP Engine
+
+The core of this project is the **Minimum Selling Price (MSP) formula** — a deterministic, bias-free pricing model implemented in `backend/app/services/msp_engine.py` that protects both the organization's sustainability and the artisan's fair wage.
+
+```
+Labor Cost      = Labor Hours × Labor Rate per Hour
+Material Cost   = Raw Material Cost × (1 + Wastage % / 100)
+Total Cost      = Material Cost + Labor Cost + Overhead Cost
+
+MSP             = Total Cost / (1 - Margin % / 100)
+```
+
+> The margin is applied **on the selling price** (not added to cost), which is the industry-standard approach and prevents systematic under-pricing over time.
 
 ---
 
@@ -41,15 +116,37 @@ By removing the complexity of manual bookkeeping and price estimation, this engi
 
 ### Prerequisites
 
-* **Node.js** (v18.0.0 or higher)
+* **Python** 3.10 or higher
+* **Node.js** v18.0.0 or higher
 * **npm** (Node Package Manager)
 
-### Installation & Setup
+### Backend Setup
 
-1. **Clone the repository:**
+1. **Navigate to the backend directory:**
    ```bash
-   git clone https://github.com/your-username/mss-inventory-engine.git
-   cd mss-inventory-engine
+   cd backend
+   ```
+
+2. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Start the API server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+4. **Access the interactive API docs:**
+   ```
+   http://localhost:8000/docs
+   ```
+
+### Frontend Setup
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd frontend
    ```
 
 2. **Install dependencies:**
@@ -69,41 +166,20 @@ By removing the complexity of manual bookkeeping and price estimation, this engi
 
 ---
 
-## 📂 Project Structure
+## 🌐 API Endpoints
 
-```
-mss-inventory-engine/
-├── public/                  # Static assets
-├── src/
-│   ├── components/          # Reusable UI elements (Sidebar, Cards, etc.)
-│   ├── pages/               # Top-level views
-│   │   ├── Login.jsx        # MSS-branded entry point
-│   │   ├── Dashboard.jsx    # Summary cards & monthly trends
-│   │   ├── Calculator.jsx   # MSP price engine (Cost Architect)
-│   │   ├── Inventory.jsx    # Searchable product catalog
-│   │   └── Activity.jsx     # Historical calculation tracker
-│   ├── api/                 # Axios clients (backend integration)
-│   └── App.jsx              # Routing & layout
-├── tailwind.config.js       # Stitch design tokens & Anandwan palette
-├── vite.config.js
-└── package.json
-```
-
----
-
-## ⚙️ The MSP Engine
-
-The core of this project is the **Minimum Selling Price (MSP) formula** — a deterministic, bias-free pricing model that protects both the organization's sustainability and the artisan's fair wage.
-
-```
-Labor Cost      = Labor Hours × Labor Rate per Hour
-Material Cost   = Raw Material Cost × (1 + Wastage % / 100)
-Total Cost      = Material Cost + Labor Cost + Overhead Cost
-
-MSP             = Total Cost / (1 - Margin % / 100)
-```
-
-> The margin is applied **on the selling price** (not added to cost), which is the industry-standard approach and prevents systematic under-pricing over time.
+| Resource | Method | Endpoint | Purpose | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Auth** | `POST` | `/auth/login` | JWT token login | ✅ Done |
+| **Products** | `GET` | `/products` | List all products | ✅ Done |
+| | `POST` | `/products` | Add new product | ✅ Done |
+| **Sales** | `GET` | `/sales` | View sales history | ✅ Done |
+| | `POST` | `/sales` | Record a new sale | ✅ Done |
+| **Batches** | `GET` | `/batches` | View production batches | ✅ Done |
+| **Costing** | `POST` | `/costing/calculate` | Compute MSP | 🔲 Planned |
+| | `POST` | `/costing/save` | Store calculation result | 🔲 Planned |
+| **Dashboard** | `GET` | `/dashboard/summary` | Revenue, cost & labor | ⏳ In Progress |
+| | `GET` | `/dashboard/impact` | Sustainability metrics | ⏳ In Progress |
 
 ---
 
@@ -124,14 +200,17 @@ The UI follows a custom accessible design system built for low-vision and low-te
 
 ## 🗺️ Roadmap
 
-- [x] Frontend UI mockups (Login, Dashboard, Calculator, Inventory, Activity)
-- [x] MSP calculation logic
-- [x] Backend core (FastAPI) & database schema
-- [ ] Connect Calculator UI to `/costing/calculate` endpoint
-- [ ] Populate Inventory via `GET /products`
+- [x] Frontend UI — Login, Dashboard, Price Calculator, Inventory, Activity Tracker
+- [x] MSP calculation engine (`msp_engine.py`)
+- [x] Backend core — FastAPI, models, routes, database schema
+- [x] Authentication system (`security.py`, `/auth` routes)
+- [x] Batch management model & routes
+- [x] Analytics service (`metrics.py`)
+- [ ] Connect `PriceCalculator.jsx` to `/costing/calculate` endpoint
+- [ ] Populate Inventory page via `GET /products`
 - [ ] Wire Dashboard to live analytics service
 - [ ] Export quotation as PDF / Excel
-- [ ] JWT-based authentication
+- [ ] Deploy backend to production with PostgreSQL
 
 ---
 

@@ -1,16 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bgTextile from '../assets/bg_textile.png';
+import { AuthAPI } from '../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    try {
+      await AuthAPI.login(userId, password);
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      setErrorMessage('Invalid credentials. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,6 +117,12 @@ export default function Login() {
               </div>
             </div>
 
+            {errorMessage && (
+              <p className="text-sm font-semibold" style={{ color: '#B84800' }}>
+                {errorMessage}
+              </p>
+            )}
+
             {/* Password */}
             <div>
               <label
@@ -166,10 +185,11 @@ export default function Login() {
             {/* Login Button */}
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full py-4 text-white text-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 mt-2 rounded-sm transition-all hover:brightness-110 active:scale-95"
               style={{ backgroundColor: '#B84800', letterSpacing: '0.1em' }}
             >
-              Admin Login
+              {isSubmitting ? 'Signing In...' : 'Admin Login'}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>

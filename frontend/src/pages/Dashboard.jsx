@@ -1,13 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calculator, Box, Leaf, Zap, User, MoveRight, ArrowRight } from 'lucide-react';
+import { Calculator, Box, Leaf, Zap, User, ArrowRight } from 'lucide-react';
+import { DashboardAPI } from '../services/api';
 
 export default function Dashboard() {
-  const transactions = [
-    { batch: "#MSS-2024-001", material: "Organic Khadi Cotton", impact: "HIGH POSITIVE", value: "₹45,200", impactColor: "bg-[#bbf7d0] text-[#166534]" },
-    { batch: "#MSS-2024-002", material: "Recycled Silk Yarn", impact: "HIGH POSITIVE", value: "₹12,850", impactColor: "bg-[#bbf7d0] text-[#166534]" },
-    { batch: "#MSS-2024-003", material: "Hemp Fiber Batch", impact: "NEUTRAL", value: "₹8,400", impactColor: "bg-[#fed7aa] text-[#c2410c]" },
-  ];
+  const [dashboardData, setDashboardData] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [summary, recentTransactions] = await Promise.all([
+          DashboardAPI.getSummary(),
+          DashboardAPI.getRecentTransactions(5),
+        ]);
+
+        setDashboardData(summary);
+        setTransactions(recentTransactions);
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const transactionRows = transactions.map((transaction) => ({
+    batch: transaction.batch_code || `#MSS-${transaction.id}`,
+    material: transaction.material || 'Unknown Product',
+    impact: transaction.impact || 'STOCK IN',
+    value: `${transaction.value ?? 0} units`,
+    impactColor: 'bg-[#bbf7d0] text-[#166534]',
+  }));
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8 text-[#1a3e35] relative">
@@ -147,7 +179,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-lg">
-              {transactions.map((t, idx) => (
+              {transactionRows.map((t, idx) => (
                 <tr key={idx} className="border-b-2 border-[#e5e4d5] hover:bg-[#eeecdb] transition-colors">
                   <td className="py-6 px-8 font-bold text-gray-700">{t.batch}</td>
                   <td className="py-6 px-8 font-black text-[#1a3e35]">{t.material}</td>
@@ -159,6 +191,13 @@ export default function Dashboard() {
                   <td className="py-6 px-8 font-black text-[#1a3e35] text-right">{t.value}</td>
                 </tr>
               ))}
+              {!loading && transactionRows.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="py-8 px-8 text-center text-[#1a3e35]/80 font-bold">
+                    No recent transactions found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

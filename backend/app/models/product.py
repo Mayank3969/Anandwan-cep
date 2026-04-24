@@ -13,3 +13,4 @@ class Product(Base):
 
     cost_entries = relationship("CostEntry", back_populates="product", cascade="all, delete-orphan")
     sales = relationship("Sale", back_populates="product", cascade="all, delete-orphan")
+    batches = relationship("Batch", back_populates="product", cascade="all, delete-orphan")

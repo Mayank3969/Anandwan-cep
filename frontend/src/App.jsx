@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import PriceCalculator from './pages/PriceCalculator';
 import Inventory from './pages/Inventory';
 import ActivityTracker from './pages/ActivityTracker';
+import { isAuthenticated } from './services/api';
 
 function Layout({ children }) {
   return (
@@ -18,20 +19,60 @@ function Layout({ children }) {
   );
 }
 
+function ProtectedRoute({ children }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 function App() {
+  const authenticated = isAuthenticated();
+
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        
-        {/* Protected Routes (assumed functional for mock purposes) */}
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/calculator" element={<Layout><PriceCalculator /></Layout>} />
-        <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
-        <Route path="/activity" element={<Layout><ActivityTracker /></Layout>} />
-        
-        {/* Default redirect to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/login"
+          element={authenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout><Dashboard /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calculator"
+          element={
+            <ProtectedRoute>
+              <Layout><PriceCalculator /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute>
+              <Layout><Inventory /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/activity"
+          element={
+            <ProtectedRoute>
+              <Layout><ActivityTracker /></Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/" element={<Navigate to={authenticated ? '/dashboard' : '/login'} replace />} />
+        <Route path="*" element={<Navigate to={authenticated ? '/dashboard' : '/login'} replace />} />
       </Routes>
     </Router>
   );

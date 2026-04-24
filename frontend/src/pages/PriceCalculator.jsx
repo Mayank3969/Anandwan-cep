@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Leaf, User, ChevronDown, Check, Mountain, Square, CheckSquare, Save, ShieldCheck } from 'lucide-react';
+import { ProductAPI, CostingAPI } from '../services/api';
 
 export default function PriceCalculator() {
-  const [productBase, setProductBase] = useState("Hand-loomed Khadi Saree");
+  const [products, setProducts] = useState([]);
+  const [productBase, setProductBase] = useState(null);
   const [cottonBase, setCottonBase] = useState(450);
   const [woolBlend, setWoolBlend] = useState(1200);
   const [laborIntensity, setLaborIntensity] = useState(3450);
@@ -10,18 +12,68 @@ export default function PriceCalculator() {
   const [surcharge, setSurcharge] = useState(true);
   const [overhead, setOverhead] = useState(false);
   const [profitMargin, setProfitMargin] = useState(25);
-
-  // Math simulation based on the reference design
-  const subTotal = Number(cottonBase) + Number(woolBlend) + Number(laborIntensity);
-  const surchargeVal = surcharge ? (subTotal * 0.07294) : 0; // Simulated to reach exactly 5472 in default state
-  const overheadVal = overhead ? (subTotal * 0.05) : 0;
   
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch products on mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await ProductAPI.getAll();
+        setProducts(data);
+        if (data.length > 0) {
+          setProductBase(data[0].name);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Math calculation
+  const subTotal = Number(cottonBase) + Number(woolBlend) + Number(laborIntensity);
+  const surchargeVal = surcharge ? (subTotal * 0.07294) : 0;
+  const overheadVal = overhead ? (subTotal * 0.05) : 0;
   const baseProductionCost = subTotal + surchargeVal + overheadVal;
   const reinvestmentFund = baseProductionCost * (profitMargin / 100);
   const sellingPrice = baseProductionCost + reinvestmentFund;
 
   const formatCurrency = (val) => {
     return val.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
+  const handleSaveCost = async () => {
+    try {
+      const selectedProduct = products.find(p => p.name === productBase);
+      if (!selectedProduct) {
+        alert('Please select a valid product');
+        return;
+      }
+
+      const costData = {
+        product_id: selectedProduct.id,
+        raw_material_cost: cottonBase + woolBlend,
+        labor_hours: laborIntensity / 50, // Estimate labor hours
+        labor_rate_per_hour: 50,
+        overhead_cost: overheadVal,
+        wastage_percent: 5,
+        margin_percent: profitMargin,
+      };
+
+      const result = await CostingAPI.save(costData);
+      alert('Cost calculated and saved successfully!');
+      console.log('Saved cost:', result);
+    } catch (err) {
+      console.error('Error saving cost:', err);
+      alert('Failed to save cost calculation');
+    }
   };
 
   return (
@@ -60,13 +112,16 @@ export default function PriceCalculator() {
             <h3 className="text-[#1a3e35] font-black text-xl mb-6">Select Product Base</h3>
             <div className="relative">
               <select 
-                value={productBase}
+                value={productBase || ""}
                 onChange={(e) => setProductBase(e.target.value)}
                 className="w-full appearance-none bg-[#f1f2e2] text-[#1a3e35] font-bold text-lg p-5 rounded border border-[#e4e6d4] focus:outline-none focus:ring-2 focus:ring-[#1a3e35] cursor-pointer"
               >
-                <option>Hand-loomed Khadi Saree</option>
-                <option>Organic Silk Kurta</option>
-                <option>Bamboo Cotton Blend</option>
+                <option value="">Select a product...</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.name}>
+                    {product.name}
+                  </option>
+                ))}
               </select>
               <div className="absolute right-5 top-1/2 transform -translate-y-1/2 text-[#1a3e35] pointer-events-none flex flex-col -space-y-1">
                 <ChevronDown className="w-5 h-5 rotate-180" />
@@ -221,7 +276,10 @@ export default function PriceCalculator() {
             </div>
 
             {/* Floating Save Button */}
-            <button className="absolute -right-4 -bottom-6 w-16 h-16 bg-[#B84800] text-white rounded-lg flex items-center justify-center hover:bg-[#a64000] transition-transform hover:scale-110 shadow-lg">
+            <button 
+              onClick={handleSaveCost}
+              className="absolute -right-4 -bottom-6 w-16 h-16 bg-[#B84800] text-white rounded-lg flex items-center justify-center hover:bg-[#a64000] transition-transform hover:scale-110 shadow-lg"
+            >
               <Save strokeWidth={2.5} className="w-8 h-8" />
             </button>
           </div>

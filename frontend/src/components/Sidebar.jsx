@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Calculator, Box, BarChart2, LogOut, HelpCircle, ChevronLeft, ChevronRight, Leaf } from 'lucide-react';
+import { clearAuthToken } from '../services/api';
 
 export default function Sidebar() {
   const [isMinimized, setIsMinimized] = useState(false);
@@ -81,6 +82,7 @@ export default function Sidebar() {
               <li key={link.to}>
                 <NavLink
                   to={link.to}
+                  onClick={link.isLogout ? clearAuthToken : undefined}
                   className={({ isActive }) => {
                     const baseStyle = "flex items-center py-4 mx-4 rounded-md font-bold text-base transition-colors duration-200 overflow-hidden whitespace-nowrap";
                     
